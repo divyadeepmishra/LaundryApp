@@ -103,7 +103,7 @@ export default function BookingsScreen() {
     <TouchableOpacity 
       key={booking.id} 
       style={styles.bookingCard}
-      onPress={() => router.push(`/booking/${booking.id}`)}
+      onPress={() => router.push(`/service/booking/${booking.id}`)}
     >
       <View style={styles.bookingHeader}>
         <View style={styles.serviceInfo}>
