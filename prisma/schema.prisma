@@ -5,61 +5,159 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Or your DB of choice
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
   id            String    @id @default(cuid())
-  clerkId       String    @unique // Stores the ID from Clerk
+  clerkId       String    @unique
   email         String    @unique
-  name          String?
+  firstName     String?
+  lastName      String?
   phone         String?
-  role          String    @default("CUSTOMER") // CUSTOMER, ADMIN
+  role          UserRole  @default(CUSTOMER)
   createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
   addresses     Address[]
   orders        Order[]
+  payments      Payment[]
+  ratings       Rating[]
 }
 
 model Address {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
-  user        User    @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        AddressType @default(DELIVERY)
   street      String
   city        String
+  state       String
   postalCode  String
-  isDefault   Boolean @default(false)
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Service {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
   description   String?
   price         Float
-  unit          String // "per_item", "per_kg"
+  unit          ServiceUnit
   image         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
   orderItems    OrderItem[]
 }
 
 model Order {
-  id              String      @id @default(cuid())
+  id              String        @id @default(cuid())
   userId          String
-  user            User        @relation(fields: [userId], references: [id])
-  status          String      // e.g., "UPCOMING", "IN_PROGRESS", "COMPLETED"
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          OrderStatus   @default(PENDING)
   totalAmount     Float
   pickupSlot      DateTime
   deliverySlot    DateTime
-  createdAt       DateTime    @default(now())
+  pickupAddress   String?
+  deliveryAddress String?
+  specialInstructions String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
   items           OrderItem[]
-  paymentId       String?     @unique
-  paymentStatus   String      @default("PENDING") // PENDING, SUCCESS, FAILED
+  payments        Payment[]
+  ratings         Rating[]
+  tracking        OrderTracking[]
 }
 
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   serviceId String
   service   Service @relation(fields: [serviceId], references: [id])
   quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  razorpayOrderId String      @unique
+  razorpayPaymentId String?   @unique
+  amount        Float
+  currency      String        @default("INR")
+  status        PaymentStatus @default(PENDING)
+  method        String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int      // 1-5 stars
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderTracking {
+  id          String        @id @default(cuid())
+  orderId     String
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      OrderStatus
+  location    String?
+  description String?
+  createdAt   DateTime      @default(now())
+}
+
+// Enums
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  DELIVERY
+}
+
+enum AddressType {
+  PICKUP
+  DELIVERY
+}
+
+enum ServiceUnit {
+  PER_ITEM
+  PER_KG
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_PROGRESS
+  READY_FOR_DELIVERY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
 }

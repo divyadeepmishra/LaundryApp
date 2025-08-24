@@ -100,8 +100,10 @@ import * as SecureStore from 'expo-secure-store';
 import { useFonts } from 'expo-font';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+// Your Clerk Publishable Key - Replace with your actual key
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_your_key_here';
 
+// Cache the Clerk JWT
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -132,15 +134,12 @@ export default function RootLayout() {
     if (error) throw error;
   }, [error]);
 
-  // We will hide the splash screen manually inside InitialLayout
-  // after Clerk is loaded.
-  
   if (!loaded) {
     return null;
   }
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <InitialLayout />
     </ClerkProvider>
   );
@@ -153,7 +152,6 @@ function InitialLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    // This is the key change: we wait until Clerk is loaded before doing anything.
     if (!isLoaded) {
       return;
     }
@@ -162,11 +160,13 @@ function InitialLayout() {
     SplashScreen.hideAsync();
 
     const inAuthGroup = segments[0] === '(auth)';
+    
+    // Get user role from Clerk metadata, default to customer
     const role = user?.publicMetadata?.role || 'customer';
 
     if (isSignedIn && !inAuthGroup) {
-      // User is signed in and not in the auth flow.
-      // Redirect them to their respective role's home screen.
+      // User is signed in and not in the auth flow
+      // Redirect them to their respective role's home screen
       if (role === 'admin') {
         router.replace('/(admin)');
       } else if (role === 'delivery') {
@@ -174,11 +174,11 @@ function InitialLayout() {
       } else {
         router.replace('/(customer)');
       }
-    } else if (!isSignedIn) {
-      // User is not signed in, redirect to the login screen.
-      router.replace('/(auth)/Signin'); // Ensure filename matches, e.g., Signin.tsx
+    } else if (!isSignedIn && !inAuthGroup) {
+      // User is not signed in and not in auth flow, redirect to login
+      router.replace('/(auth)/Signin');
     }
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, segments]);
 
   // While Clerk is loading, we render nothing, so the splash screen remains visible.
   if (!isLoaded) {

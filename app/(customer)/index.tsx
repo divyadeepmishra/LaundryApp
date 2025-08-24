@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
 
 export default function CustomerHomeScreen() {
-  const user = { name: 'Maharaj' }; // Replace with actual user data from Clerk
+  const { user } = useUser();
+  const userName = user?.firstName || user?.username || 'User';
 
   // This would come from your API, showing the user's most recent active booking
   const activeBooking = {
@@ -26,8 +28,27 @@ export default function CustomerHomeScreen() {
   };
 
   const services = [
-    { id: 'wash-fold', name: 'Wash & Fold', description: 'Fresh, folded, and ready to wear.', icon: 'shirt' },
-    { id: 'dry-clean', name: 'Dry Cleaning', description: 'Expert care for delicate items.', icon: 'diamond' },
+    { 
+      id: 'wash-fold', 
+      name: 'Wash & Fold', 
+      description: 'Fresh, folded, and ready to wear.', 
+      icon: 'shirt',
+      price: '₹50/kg'
+    },
+    { 
+      id: 'dry-clean', 
+      name: 'Dry Cleaning', 
+      description: 'Expert care for delicate items.', 
+      icon: 'diamond',
+      price: '₹100/item'
+    },
+    { 
+      id: 'iron-press', 
+      name: 'Iron & Press', 
+      description: 'Crisp, professional finish.', 
+      icon: 'flash',
+      price: '₹30/item'
+    },
   ];
 
   return (
@@ -41,10 +62,11 @@ export default function CustomerHomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Welcome back,</Text>
-            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userName}>{userName}</Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity style={styles.notificationButton}>
             <Ionicons name="notifications-outline" size={26} color={COLORS.text} />
+            <View style={styles.notificationBadge} />
           </TouchableOpacity>
         </View>
 
@@ -78,6 +100,25 @@ export default function CustomerHomeScreen() {
           </View>
         </View>
 
+        {/* Quick Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
+            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="time" size={24} color={COLORS.warning} />
+            <Text style={styles.statNumber}>3</Text>
+            <Text style={styles.statLabel}>In Progress</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="star" size={24} color={COLORS.primary} />
+            <Text style={styles.statNumber}>4.8</Text>
+            <Text style={styles.statLabel}>Rating</Text>
+          </View>
+        </View>
+
         {/* Our Services Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Our Services</Text>
@@ -93,6 +134,7 @@ export default function CustomerHomeScreen() {
               <View style={styles.serviceInfo}>
                 <Text style={styles.serviceName}>{service.name}</Text>
                 <Text style={styles.serviceDescription}>{service.description}</Text>
+                <Text style={styles.servicePrice}>{service.price}</Text>
               </View>
               <Ionicons name="chevron-forward" size={22} color={COLORS.textSecondary} />
             </TouchableOpacity>
@@ -127,6 +169,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.text,
+  },
+  notificationButton: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.primary,
   },
   statusCard: {
     flexDirection: 'row',
@@ -164,7 +218,7 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 20,
     overflow: 'hidden',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   heroImage: {
     width: '100%',
@@ -205,6 +259,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginRight: 8,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 4,
   },
   section: {
     marginBottom: 16,
@@ -249,5 +329,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     marginTop: 2,
+  },
+  servicePrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginTop: 4,
   },
 });
