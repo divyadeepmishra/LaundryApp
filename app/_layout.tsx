@@ -167,20 +167,31 @@ function InitialLayout() {
     // Get user role from Clerk metadata, default to customer
     const role = user?.publicMetadata?.role || 'customer';
 
-    console.log('Auth state:', { isSignedIn, inAuthGroup, role, segments });
+    console.log('🔐 Auth Debug:', { 
+      isSignedIn, 
+      inAuthGroup, 
+      role, 
+      segments, 
+      userId: user?.id,
+      userEmail: user?.emailAddresses?.[0]?.emailAddress,
+      publicMetadata: user?.publicMetadata
+    });
 
-    if (isSignedIn && !inAuthGroup) {
-      // User is signed in and not in the auth flow
-      // Redirect them to their respective role's home screen
+    if (isSignedIn) {
+      // User is signed in - redirect based on role
+      console.log('✅ User signed in, redirecting to:', role);
+      
       if (role === 'admin') {
         router.replace('/(admin)');
       } else if (role === 'delivery') {
         router.replace('/(delivery)');
       } else {
+        // Default to customer for all users without a specific role
         router.replace('/(customer)');
       }
     } else if (!isSignedIn && !inAuthGroup) {
       // User is not signed in and not in auth flow, redirect to login
+      console.log('❌ User not signed in, redirecting to signin');
       router.replace('/(auth)/Signin');
     }
   }, [isLoaded, isSignedIn, user, segments]);

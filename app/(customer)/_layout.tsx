@@ -47,6 +47,15 @@ export default function CustomerLayout() {
         }}
       />
       <Tabs.Screen
+        name="role-assignment"
+        options={{
+          title: 'Role Test',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
