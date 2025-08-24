@@ -92,7 +92,7 @@
 
 
 // app/_layout.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -153,6 +153,7 @@ function InitialLayout() {
   const { user } = useUser();
   const segments = useSegments();
   const router = useRouter();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) {
@@ -174,12 +175,18 @@ function InitialLayout() {
       segments, 
       userId: user?.id,
       userEmail: user?.emailAddresses?.[0]?.emailAddress,
-      publicMetadata: user?.publicMetadata
+      publicMetadata: user?.publicMetadata,
+      hasRedirected
     });
 
-    if (isSignedIn) {
+    // Check if user exists (which means they're signed in) even if isSignedIn is false
+    const userExists = user?.id && user?.emailAddresses?.length > 0;
+    const shouldBeSignedIn = userExists || isSignedIn;
+
+    if (shouldBeSignedIn && !hasRedirected) {
       // User is signed in - redirect based on role
       console.log('✅ User signed in, redirecting to:', role);
+      setHasRedirected(true);
       
       if (role === 'admin') {
         router.replace('/(admin)');
@@ -189,12 +196,18 @@ function InitialLayout() {
         // Default to customer for all users without a specific role
         router.replace('/(customer)');
       }
-    } else if (!isSignedIn && !inAuthGroup) {
+    } else if (!shouldBeSignedIn && !inAuthGroup && !hasRedirected) {
       // User is not signed in and not in auth flow, redirect to login
       console.log('❌ User not signed in, redirecting to signin');
+      setHasRedirected(true);
       router.replace('/(auth)/Signin');
     }
-  }, [isLoaded, isSignedIn, user, segments]);
+  }, [isLoaded, isSignedIn, user, segments, hasRedirected]);
+
+  // Reset redirect flag when user changes
+  useEffect(() => {
+    setHasRedirected(false);
+  }, [user?.id]);
 
   // While Clerk is loading, we render nothing, so the splash screen remains visible.
   if (!isLoaded) {

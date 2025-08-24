@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useUser } from '@clerk/clerk-expo';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
@@ -17,7 +18,30 @@ import AuthDebugger from '../../components/AuthDebugger';
 
 export default function CustomerHomeScreen() {
   const { user } = useUser();
+  const { signOut } = useAuth();
   const userName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace('/(auth)/Signin');
+            } catch (error) {
+              console.error('Sign out error:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Mock data - replace with actual API calls
   const services = [
@@ -45,10 +69,15 @@ export default function CustomerHomeScreen() {
           <Text style={styles.greeting}>Hello, {userName}! 👋</Text>
           <Text style={styles.subtitle}>What would you like to do today?</Text>
         </View>
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications-outline" size={24} color={COLORS.text} />
-          <View style={styles.notificationBadge} />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color={COLORS.text} />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
@@ -148,6 +177,11 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 4,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   notificationButton: {
     position: 'relative',
     padding: 8,
@@ -160,6 +194,11 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: COLORS.error,
+  },
+  signOutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.error + '10',
   },
   scrollView: {
     flex: 1,
