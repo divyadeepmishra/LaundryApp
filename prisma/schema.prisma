@@ -1,0 +1,65 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Or your DB of choice
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique // Stores the ID from Clerk
+  email         String    @unique
+  name          String?
+  phone         String?
+  role          String    @default("CUSTOMER") // CUSTOMER, ADMIN
+  createdAt     DateTime  @default(now())
+  addresses     Address[]
+  orders        Order[]
+}
+
+model Address {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id])
+  street      String
+  city        String
+  postalCode  String
+  isDefault   Boolean @default(false)
+}
+
+model Service {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  price         Float
+  unit          String // "per_item", "per_kg"
+  image         String?
+  orderItems    OrderItem[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  status          String      // e.g., "UPCOMING", "IN_PROGRESS", "COMPLETED"
+  totalAmount     Float
+  pickupSlot      DateTime
+  deliverySlot    DateTime
+  createdAt       DateTime    @default(now())
+  items           OrderItem[]
+  paymentId       String?     @unique
+  paymentStatus   String      @default("PENDING") // PENDING, SUCCESS, FAILED
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+  quantity  Int
+}
