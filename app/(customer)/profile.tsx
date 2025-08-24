@@ -1,132 +1,213 @@
-// app/(customer)/(tabs)/profile.tsx
+// app/(customer)/profile.tsx
 import React from 'react';
 import {
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Switch,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
 
-interface ProfileOption {
-  id: string;
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  type: 'navigation' | 'switch';
-  value?: boolean;
-}
-
 export default function ProfileScreen() {
-  const user = {
-    name: 'Maharaj',
-    email: 'maharaj@laundry.dev',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+  const { user } = useUser();
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              console.error('Error signing out:', error);
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const accountOptions: ProfileOption[] = [
-    { id: 'addresses', title: 'My Addresses', icon: 'location-outline', type: 'navigation' },
-    { id: 'payment', title: 'Payment Methods', icon: 'card-outline', type: 'navigation' },
+  const profileMenuItems = [
+    {
+      id: 'personal-info',
+      title: 'Personal Information',
+      subtitle: 'Update your name, email, and phone',
+      icon: 'person-outline',
+      onPress: () => router.push('/profile/personal-info'),
+    },
+    {
+      id: 'addresses',
+      title: 'Delivery Addresses',
+      subtitle: 'Manage your pickup and delivery addresses',
+      icon: 'location-outline',
+      onPress: () => router.push('/profile/addresses'),
+    },
+    {
+      id: 'payment-methods',
+      title: 'Payment Methods',
+      subtitle: 'Manage your saved payment options',
+      icon: 'card-outline',
+      onPress: () => router.push('/profile/payment-methods'),
+    },
+    {
+      id: 'notifications',
+      title: 'Notifications',
+      subtitle: 'Configure your notification preferences',
+      icon: 'notifications-outline',
+      onPress: () => router.push('/profile/notifications'),
+    },
+    {
+      id: 'privacy',
+      title: 'Privacy & Security',
+      subtitle: 'Manage your account security',
+      icon: 'shield-outline',
+      onPress: () => router.push('/profile/privacy'),
+    },
+    {
+      id: 'help',
+      title: 'Help & Support',
+      subtitle: 'Get help with your orders',
+      icon: 'help-circle-outline',
+      onPress: () => router.push('/profile/help'),
+    },
+    {
+      id: 'about',
+      title: 'About',
+      subtitle: 'App version and legal information',
+      icon: 'information-circle-outline',
+      onPress: () => router.push('/profile/about'),
+    },
   ];
 
-  const appOptions: ProfileOption[] = [
-    { id: 'notifications', title: 'Notifications', icon: 'notifications-outline', type: 'switch', value: true },
-    { id: 'dark_mode', title: 'Dark Mode', icon: 'moon-outline', type: 'switch', value: false },
+  const quickActions = [
+    {
+      id: 'track-order',
+      title: 'Track Order',
+      icon: 'location-outline',
+      onPress: () => router.push('/tracking'),
+    },
+    {
+      id: 'contact-support',
+      title: 'Contact Support',
+      icon: 'chatbubble-outline',
+      onPress: () => router.push('/support'),
+    },
+    {
+      id: 'rate-app',
+      title: 'Rate App',
+      icon: 'star-outline',
+      onPress: () => {
+        // Handle app rating
+        Alert.alert('Rate App', 'This would open the app store rating page');
+      },
+    },
   ];
-  
-  const supportOptions: ProfileOption[] = [
-    { id: 'help', title: 'Help & Support', icon: 'help-circle-outline', type: 'navigation' },
-    { id: 'terms', title: 'Terms of Service', icon: 'document-text-outline', type: 'navigation' },
-  ];
-
-  const ProfileOptionRow = ({ option, isLast }: { option: ProfileOption, isLast?: boolean }) => (
-    <TouchableOpacity style={[styles.optionRow, isLast && { borderBottomWidth: 0 }]}>
-      <Ionicons name={option.icon} size={24} color={COLORS.textSecondary} />
-      <Text style={styles.optionTitle}>{option.title}</Text>
-      {option.type === 'switch' ? (
-        <Switch
-          value={option.value}
-          trackColor={{ false: COLORS.border, true: COLORS.primary }}
-          thumbColor={COLORS.white}
-        />
-      ) : (
-        <Ionicons name="chevron-forward" size={22} color={COLORS.textSecondary} />
-      )}
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.title}>Profile</Text>
+        <TouchableOpacity style={styles.editButton}>
+          <Ionicons name="create-outline" size={24} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* User Info Card */}
-        <View style={styles.profileCard}>
-          <Image source={{ uri: user.avatar }} style={styles.avatar} />
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
+        <View style={styles.userCard}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={40} color={COLORS.white} />
+            </View>
+            <TouchableOpacity style={styles.editAvatarButton}>
+              <Ionicons name="camera" size={16} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text style={styles.userEmail}>{user?.emailAddresses[0]?.emailAddress}</Text>
+            <Text style={styles.userPhone}>
+              {user?.phoneNumbers[0]?.phoneNumber || 'No phone number'}
+            </Text>
+          </View>
         </View>
 
-        {/* Account Section */}
+        {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.optionsContainer}>
-            {accountOptions.map((option, index) => (
-              <ProfileOptionRow 
-                key={option.id} 
-                option={option}
-                isLast={index === accountOptions.length - 1}
-              />
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsContainer}>
+            {quickActions.map((action) => (
+              <TouchableOpacity
+                key={action.id}
+                style={styles.quickActionButton}
+                onPress={action.onPress}
+              >
+                <View style={styles.quickActionIcon}>
+                  <Ionicons name={action.icon as any} size={24} color={COLORS.primary} />
+                </View>
+                <Text style={styles.quickActionText}>{action.title}</Text>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Preferences Section */}
+        {/* Profile Menu */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-           <View style={styles.optionsContainer}>
-            {appOptions.map((option, index) => (
-              <ProfileOptionRow 
-                key={option.id} 
-                option={option}
-                isLast={index === appOptions.length - 1}
-              />
-            ))}
-          </View>
-        </View>
-        
-        {/* Support Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-           <View style={styles.optionsContainer}>
-            {supportOptions.map((option, index) => (
-              <ProfileOptionRow 
-                key={option.id} 
-                option={option}
-                isLast={index === supportOptions.length - 1}
-              />
+          <Text style={styles.sectionTitle}>Account Settings</Text>
+          <View style={styles.menuContainer}>
+            {profileMenuItems.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.menuItem}
+                onPress={item.onPress}
+              >
+                <View style={styles.menuItemLeft}>
+                  <View style={styles.menuItemIcon}>
+                    <Ionicons name={item.icon as any} size={20} color={COLORS.textSecondary} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={styles.menuItemTitle}>{item.title}</Text>
+                    <Text style={styles.menuItemSubtitle}>{item.subtitle}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+              </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
+        {/* Sign Out Button */}
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+          <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
-        
-        <Text style={styles.appVersion}>Version 1.0.0</Text>
+
+        {/* App Version */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>LaundryApp v1.0.0</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -135,103 +216,185 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface, // Use light gray for the background
+    backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: COLORS.text,
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  profileCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 16,
-    borderWidth: 3,
-    borderColor: COLORS.primary,
-  },
-  userName: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.text,
   },
+  editButton: {
+    padding: 8,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  userCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  userInfo: {
+    alignItems: 'center',
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: 4,
+  },
   userEmail: {
     fontSize: 16,
     color: COLORS.textSecondary,
-    marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 2,
   },
-  editButton: {
-    backgroundColor: 'rgba(255, 56, 92, 0.1)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  editButtonText: {
-    color: COLORS.primary,
+  userPhone: {
     fontSize: 14,
-    fontWeight: '600',
+    color: COLORS.textLight,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: COLORS.text,
+    marginBottom: 16,
+  },
+  quickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  quickActionButton: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
-    paddingHorizontal: 4,
   },
-  optionsContainer: {
-    backgroundColor: COLORS.background,
+  quickActionText: {
+    fontSize: 12,
+    color: COLORS.text,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  menuContainer: {
+    backgroundColor: COLORS.white,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  optionRow: {
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  optionTitle: {
-    flex: 1,
-    fontSize: 16,
-    color: COLORS.text,
-    marginLeft: 16,
-  },
-  logoutButton: {
-    backgroundColor: COLORS.background,
-    borderRadius: 16,
-    padding: 16,
+  menuItemLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    flex: 1,
   },
-  logoutText: {
+  menuItemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  menuItemContent: {
+    flex: 1,
+  },
+  menuItemTitle: {
     fontSize: 16,
-    color: COLORS.error,
-    fontWeight: '600',
+    fontWeight: '500',
+    color: COLORS.text,
+    marginBottom: 2,
   },
-  appVersion: {
-    textAlign: 'center',
-    marginTop: 24,
+  menuItemSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: COLORS.error + '30',
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.error,
+    marginLeft: 8,
+  },
+  versionContainer: {
+    alignItems: 'center',
+  },
+  versionText: {
+    fontSize: 14,
     color: COLORS.textLight,
-    fontSize: 12,
   },
 });

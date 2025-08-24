@@ -3,198 +3,213 @@ import React, { useState } from 'react';
 import {
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  RefreshControl,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
 
-interface Booking {
-  id: number;
-  serviceName: string;
-  serviceType: string;
-  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
-  date: string;
-  time: string;
-  price: number;
-  image: string;
-  items: string[];
-}
-
 export default function BookingsScreen() {
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
-  const [refreshing, setRefreshing] = useState(false);
+  const { user } = useUser();
+  const [activeTab, setActiveTab] = useState('upcoming');
 
-  const bookings: Booking[] = [
-    {
-      id: 1,
-      serviceName: 'QuickWash Express',
-      serviceType: 'Wash & Fold',
-      status: 'upcoming',
-      date: 'Aug 25, 2025',
-      time: '10:30 AM',
-      price: 240,
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-      items: ['2 Shirts', '1 Jeans', '3 T-shirts'],
-    },
-    {
-      id: 2,
-      serviceName: 'Premium Laundry Care',
-      serviceType: 'Dry Clean',
-      status: 'in_progress',
-      date: 'Aug 24, 2025',
-      time: '2:00 PM',
-      price: 450,
-      image: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?w=400',
-      items: ['1 Suit', '2 Formal Shirts'],
-    },
-    {
-      id: 3,
-      serviceName: 'Eco Wash Station',
-      serviceType: 'Wash & Fold',
-      status: 'completed',
-      date: 'Aug 20, 2025',
-      time: '11:00 AM',
-      price: 180,
-      image: 'https://images.unsplash.com/photo-1604335399105-a0c585fd81a0?w=400',
-      items: ['5 T-shirts', '2 Jeans'],
-    },
-     {
-      id: 4,
-      serviceName: 'QuickWash Express',
-      serviceType: 'Wash & Fold',
-      status: 'cancelled',
-      date: 'Aug 18, 2025',
-      time: '09:00 AM',
-      price: 150,
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-      items: ['3 Shirts', '2 Trousers'],
-    },
-  ];
+  // Mock data - replace with actual API calls
+  const bookings = {
+    upcoming: [
+      {
+        id: '1',
+        service: 'Wash & Fold',
+        items: 5,
+        weight: '2.5 kg',
+        pickupDate: '2024-01-15',
+        pickupTime: '10:00 AM',
+        deliveryDate: '2024-01-17',
+        deliveryTime: '2:00 PM',
+        status: 'confirmed',
+        totalAmount: 125,
+      },
+      {
+        id: '2',
+        service: 'Dry Cleaning',
+        items: 3,
+        weight: '1.2 kg',
+        pickupDate: '2024-01-18',
+        pickupTime: '11:00 AM',
+        deliveryDate: '2024-01-20',
+        deliveryTime: '3:00 PM',
+        status: 'pending',
+        totalAmount: 300,
+      },
+    ],
+    completed: [
+      {
+        id: '3',
+        service: 'Wash & Fold',
+        items: 8,
+        weight: '4.0 kg',
+        pickupDate: '2024-01-10',
+        pickupTime: '9:00 AM',
+        deliveryDate: '2024-01-12',
+        deliveryTime: '1:00 PM',
+        status: 'completed',
+        totalAmount: 200,
+        rating: 5,
+      },
+    ],
+  };
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
-  }, []);
-
-  const getStatusInfo = (status: Booking['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'upcoming':
-        return { text: 'Upcoming', color: COLORS.warning, icon: 'time-outline' };
-      case 'in_progress':
-        return { text: 'In Progress', color: COLORS.primary, icon: 'hourglass-outline' };
+      case 'confirmed':
+        return COLORS.success;
+      case 'pending':
+        return COLORS.warning;
       case 'completed':
-        return { text: 'Completed', color: COLORS.success, icon: 'checkmark-circle-outline' };
-      case 'cancelled':
-        return { text: 'Cancelled', color: COLORS.error, icon: 'close-circle-outline' };
+        return COLORS.primary;
       default:
-        return { text: 'Unknown', color: COLORS.gray, icon: 'help-circle-outline' };
+        return COLORS.textSecondary;
     }
   };
 
-  const filteredBookings = bookings.filter(booking => {
-    if (activeTab === 'upcoming') {
-      return booking.status === 'upcoming' || booking.status === 'in_progress';
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'Confirmed';
+      case 'pending':
+        return 'Pending';
+      case 'completed':
+        return 'Completed';
+      default:
+        return status;
     }
-    return booking.status === 'completed' || booking.status === 'cancelled';
-  });
-
-  const BookingCard = ({ booking }: { booking: Booking }) => {
-    const statusInfo = getStatusInfo(booking.status);
-    return(
-      <TouchableOpacity style={styles.bookingCard}>
-        <View style={styles.cardHeader}>
-          <Image source={{ uri: booking.image }} style={styles.serviceImage} />
-          <View style={styles.headerInfo}>
-            <Text style={styles.serviceName}>{booking.serviceName}</Text>
-            <Text style={styles.serviceType}>{booking.serviceType}</Text>
-          </View>
-          <Text style={styles.price}>₹{booking.price}</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.cardDetails}>
-          <View style={styles.detailItem}>
-            <Ionicons name="calendar-outline" size={16} color={COLORS.textSecondary} />
-            <Text style={styles.detailText}>{booking.date} at {booking.time}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Ionicons name={statusInfo.icon as any} size={16} color={statusInfo.color} />
-            <Text style={[styles.detailText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
-          </View>
-        </View>
-        
-        {booking.status === 'completed' && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Rate</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Reorder</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-         {booking.status === 'upcoming' && (
-          <View style={styles.actionButtons}>
-             <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Track Order</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </TouchableOpacity>
-    )
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const renderBookingCard = (booking: any) => (
+    <TouchableOpacity 
+      key={booking.id} 
+      style={styles.bookingCard}
+      onPress={() => router.push(`/service/booking/${booking.id}`)}
+    >
+      <View style={styles.bookingHeader}>
+        <View style={styles.serviceInfo}>
+          <Text style={styles.serviceName}>{booking.service}</Text>
+          <Text style={styles.bookingDetails}>
+            {booking.items} items • {booking.weight}
+          </Text>
+        </View>
+        <View style={styles.statusContainer}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
+              {getStatusText(booking.status)}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.bookingTimeline}>
+        <View style={styles.timelineItem}>
+          <Ionicons name="calendar-outline" size={16} color={COLORS.textSecondary} />
+          <Text style={styles.timelineText}>
+            Pickup: {formatDate(booking.pickupDate)} at {booking.pickupTime}
+          </Text>
+        </View>
+        <View style={styles.timelineItem}>
+          <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
+          <Text style={styles.timelineText}>
+            Delivery: {formatDate(booking.deliveryDate)} at {booking.deliveryTime}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.bookingFooter}>
+        <Text style={styles.amount}>₹{booking.totalAmount}</Text>
+        {booking.rating && (
+          <View style={styles.ratingContainer}>
+            <Ionicons name="star" size={16} color={COLORS.warning} />
+            <Text style={styles.ratingText}>{booking.rating}/5</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Bookings</Text>
+        <Text style={styles.title}>My Bookings</Text>
+        <TouchableOpacity 
+          style={styles.newBookingButton}
+          onPress={() => router.push('/service/wash-fold')}
+        >
+          <Ionicons name="add" size={20} color={COLORS.white} />
+          <Text style={styles.newBookingText}>New Booking</Text>
+        </TouchableOpacity>
       </View>
 
+      {/* Tab Navigation */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
+        <TouchableOpacity 
           style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
           onPress={() => setActiveTab('upcoming')}
         >
-          <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>Upcoming</Text>
+          <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>
+            Upcoming ({bookings.upcoming.length})
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity 
           style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
           onPress={() => setActiveTab('completed')}
         >
-          <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>History</Text>
+          <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
+            Completed ({bookings.completed.length})
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.content}
+      {/* Bookings List */}
+      <ScrollView 
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={styles.scrollContent}
       >
-        {filteredBookings.length > 0 ? (
-          filteredBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)
+        {bookings[activeTab as keyof typeof bookings].length > 0 ? (
+          bookings[activeTab as keyof typeof bookings].map(renderBookingCard)
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={80} color={COLORS.border} />
-            <Text style={styles.emptyTitle}>No Bookings Yet</Text>
-            <Text style={styles.emptyText}>
-              Your {activeTab === 'upcoming' ? 'active' : 'past'} bookings will appear here.
+            <Ionicons name="calendar-outline" size={64} color={COLORS.textLight} />
+            <Text style={styles.emptyTitle}>No {activeTab} bookings</Text>
+            <Text style={styles.emptySubtitle}>
+              {activeTab === 'upcoming' 
+                ? 'Create your first booking to get started'
+                : 'Your completed bookings will appear here'
+              }
             </Text>
-            <TouchableOpacity style={styles.bookNowButton} onPress={() => router.replace('/')}>
-              <Text style={styles.bookNowText}>Book a Service</Text>
-            </TouchableOpacity>
+            {activeTab === 'upcoming' && (
+              <TouchableOpacity 
+                style={styles.emptyButton}
+                onPress={() => router.push('/service/wash-fold')}
+              >
+                <Text style={styles.emptyButtonText}>Create Booking</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
@@ -205,165 +220,167 @@ export default function BookingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  headerTitle: {
-    fontSize: 28,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.text,
   },
+  newBookingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  newBookingText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginRight: 10,
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '20',
   },
   tabText: {
     fontSize: 16,
-    fontWeight: '600',
     color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   activeTabText: {
-    color: COLORS.white,
+    color: COLORS.primary,
+    fontWeight: '600',
   },
-  content: {
+  scrollView: {
     flex: 1,
-    paddingHorizontal: 20,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
   },
   bookingCard: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
-    marginTop: 16,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  cardHeader: {
+  bookingHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  serviceImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    marginRight: 12,
-  },
-  headerInfo: {
+  serviceInfo: {
     flex: 1,
   },
   serviceName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: COLORS.text,
+    marginBottom: 4,
   },
-  serviceType: {
+  bookingDetails: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    marginTop: 2,
   },
-  price: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+  statusContainer: {
+    marginLeft: 12,
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 12,
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-
-  cardDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
-  },
-  primaryButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  primaryButtonText: {
-    color: COLORS.white,
-    fontSize: 14,
+  statusText: {
+    fontSize: 12,
     fontWeight: '600',
   },
-  secondaryButton: {
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  bookingTimeline: {
+    marginBottom: 12,
   },
-  secondaryButtonText: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyState: {
-    flex: 1,
+  timelineItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginTop: 24,
     marginBottom: 8,
   },
-  emptyText: {
+  timelineText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: 8,
+  },
+  bookingFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  amount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginLeft: 4,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
     fontSize: 16,
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
-    lineHeight: 24,
   },
-  bookNowButton: {
+  emptyButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 32,
-    paddingVertical: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 12,
   },
-  bookNowText: {
+  emptyButtonText: {
     color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',

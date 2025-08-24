@@ -6,73 +6,117 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Linking,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
 
-interface Task {
-  id: string;
-  type: 'pickup' | 'delivery';
-  customerName: string;
-  address: string;
-  timeSlot: string;
-  status: 'pending' | 'completed';
-}
+export default function DeliveryDashboardScreen() {
+  const { user } = useUser();
+  const [isOnline, setIsOnline] = useState(true);
 
-// Sample data for delivery tasks
-const tasks: Task[] = [
-  { id: 'ORD-001', type: 'pickup', customerName: 'Rohan Sharma', address: '123, Sector 17, Chandigarh', timeSlot: '10 AM - 12 PM', status: 'pending' },
-  { id: 'ORD-002', type: 'delivery', customerName: 'Priya Singh', address: '456, Phase 7, Mohali', timeSlot: '11 AM - 1 PM', status: 'pending' },
-  { id: 'ORD-003', type: 'pickup', customerName: 'Amit Verma', address: '789, MDC, Panchkula', timeSlot: '2 PM - 4 PM', status: 'pending' },
-];
+  // Mock data - replace with actual API calls
+  const todayStats = {
+    pickups: 8,
+    deliveries: 12,
+    completed: 15,
+    earnings: 1200,
+  };
 
-export default function DeliveryHomeScreen() {
-  const [activeTab, setActiveTab] = useState<'pickups' | 'deliveries'>('pickups');
-  
-  const filteredTasks = tasks.filter(task => {
-    if (activeTab === 'pickups') return task.type === 'pickup';
-    return task.type === 'delivery';
-  });
+  const currentTasks = [
+    {
+      id: '1',
+      type: 'pickup',
+      customerName: 'John Doe',
+      address: '123 Main St, Apartment 4B',
+      time: '10:00 AM',
+      items: 5,
+      status: 'in_progress',
+    },
+    {
+      id: '2',
+      type: 'delivery',
+      customerName: 'Jane Smith',
+      address: '456 Oak Ave, Unit 7',
+      time: '11:30 AM',
+      items: 3,
+      status: 'pending',
+    },
+    {
+      id: '3',
+      type: 'pickup',
+      customerName: 'Mike Johnson',
+      address: '789 Pine Rd, House 12',
+      time: '2:00 PM',
+      items: 8,
+      status: 'pending',
+    },
+  ];
 
-  const openMaps = (address: string) => {
-    const url = `https://maps.google.com/?q=${encodeURIComponent(address)}`;
-    Linking.openURL(url);
-  }
+  const getTaskTypeColor = (type: string) => {
+    return type === 'pickup' ? COLORS.primary : COLORS.success;
+  };
 
-  const TaskCard = ({ task }: { task: Task }) => {
-    const isPickup = task.type === 'pickup';
-    return (
-      <TouchableOpacity 
-        style={styles.taskCard} 
-        onPress={() => router.push(`/order/${task.id}`)} // Navigation for next step
-      >
-        <View style={styles.cardHeader}>
-          <View style={[styles.typeIndicator, { backgroundColor: isPickup ? COLORS.warning : COLORS.success }]} />
-          <Ionicons name={isPickup ? 'arrow-up-circle' : 'arrow-down-circle'} size={24} color={isPickup ? COLORS.warning : COLORS.success} />
-          <Text style={styles.orderId}>Order #{task.id}</Text>
-          <Text style={styles.timeSlot}>{task.timeSlot}</Text>
-        </View>
+  const getTaskTypeIcon = (type: string) => {
+    return type === 'pickup' ? 'arrow-down-circle' : 'arrow-up-circle';
+  };
 
-        <View style={styles.customerInfo}>
-          <Text style={styles.customerName}>{task.customerName}</Text>
-          <Text style={styles.address}>{task.address}</Text>
-        </View>
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return COLORS.warning;
+      case 'in_progress':
+        return COLORS.primary;
+      case 'completed':
+        return COLORS.success;
+      default:
+        return COLORS.textSecondary;
+    }
+  };
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Ionicons name="call-outline" size={18} color={COLORS.text} />
-            <Text style={styles.secondaryButtonText}>Call</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => openMaps(task.address)}>
-            <Ionicons name="navigate-outline" size={18} color={COLORS.white} />
-            <Text style={styles.primaryButtonText}>Navigate</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
+  const handleToggleOnline = () => {
+    setIsOnline(!isOnline);
+    Alert.alert(
+      isOnline ? 'Go Offline' : 'Go Online',
+      `You are now ${isOnline ? 'offline' : 'online'}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleStartTask = (taskId: string) => {
+    Alert.alert(
+      'Start Task',
+      'Are you sure you want to start this task?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Start',
+          onPress: () => {
+            // Update task status
+            Alert.alert('Task Started', 'You can now proceed with the task.');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCompleteTask = (taskId: string) => {
+    Alert.alert(
+      'Complete Task',
+      'Are you sure you want to mark this task as completed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Complete',
+          onPress: () => {
+            Alert.alert('Task Completed', 'Great job! Task marked as completed.');
+          },
+        },
+      ]
     );
   };
 
@@ -80,35 +124,146 @@ export default function DeliveryHomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Today's Tasks</Text>
-      </View>
-      
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'pickups' && styles.activeTab]}
-          onPress={() => setActiveTab('pickups')}
+        <View>
+          <Text style={styles.greeting}>Good morning,</Text>
+          <Text style={styles.deliveryName}>{user?.firstName || 'Delivery Partner'}</Text>
+        </View>
+        <TouchableOpacity 
+          style={[styles.onlineButton, { backgroundColor: isOnline ? COLORS.success : COLORS.error }]}
+          onPress={handleToggleOnline}
         >
-          <Text style={[styles.tabText, activeTab === 'pickups' && styles.activeTabText]}>Pickups</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'deliveries' && styles.activeTab]}
-          onPress={() => setActiveTab('deliveries')}
-        >
-          <Text style={[styles.tabText, activeTab === 'deliveries' && styles.activeTabText]}>Deliveries</Text>
+          <View style={[styles.onlineIndicator, { backgroundColor: isOnline ? COLORS.white : COLORS.white }]} />
+          <Text style={styles.onlineText}>{isOnline ? 'Online' : 'Offline'}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {filteredTasks.length > 0 ? (
-          filteredTasks.map(task => <TaskCard key={task.id} task={task} />)
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="checkmark-done-circle-outline" size={80} color={COLORS.border} />
-            <Text style={styles.emptyTitle}>All tasks completed!</Text>
-            <Text style={styles.emptyText}>No pending {activeTab} for today.</Text>
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Today's Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Ionicons name="arrow-down-circle" size={24} color={COLORS.primary} />
+            <Text style={styles.statValue}>{todayStats.pickups}</Text>
+            <Text style={styles.statLabel}>Pickups</Text>
           </View>
-        )}
+          <View style={styles.statCard}>
+            <Ionicons name="arrow-up-circle" size={24} color={COLORS.success} />
+            <Text style={styles.statValue}>{todayStats.deliveries}</Text>
+            <Text style={styles.statLabel}>Deliveries</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
+            <Text style={styles.statValue}>{todayStats.completed}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="cash" size={24} color={COLORS.primary} />
+            <Text style={styles.statValue}>₹{todayStats.earnings}</Text>
+            <Text style={styles.statLabel}>Earnings</Text>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/map')}>
+              <Ionicons name="map-outline" size={28} color={COLORS.primary} />
+              <Text style={styles.actionText}>View Map</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/earnings')}>
+              <Ionicons name="wallet-outline" size={28} color={COLORS.primary} />
+              <Text style={styles.actionText}>Earnings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/schedule')}>
+              <Ionicons name="calendar-outline" size={28} color={COLORS.primary} />
+              <Text style={styles.actionText}>Schedule</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/support')}>
+              <Ionicons name="help-circle-outline" size={28} color={COLORS.primary} />
+              <Text style={styles.actionText}>Support</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Current Tasks */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Today's Tasks</Text>
+            <TouchableOpacity onPress={() => router.push('/tasks')}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.tasksContainer}>
+            {currentTasks.map((task) => (
+              <View key={task.id} style={styles.taskCard}>
+                <View style={styles.taskHeader}>
+                  <View style={styles.taskTypeContainer}>
+                    <Ionicons 
+                      name={getTaskTypeIcon(task.type) as any} 
+                      size={20} 
+                      color={getTaskTypeColor(task.type)} 
+                    />
+                    <Text style={[styles.taskType, { color: getTaskTypeColor(task.type) }]}>
+                      {task.type.charAt(0).toUpperCase() + task.type.slice(1)}
+                    </Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(task.status) + '20' }]}>
+                    <Text style={[styles.statusText, { color: getStatusColor(task.status) }]}>
+                      {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.taskInfo}>
+                  <Text style={styles.customerName}>{task.customerName}</Text>
+                  <Text style={styles.address}>{task.address}</Text>
+                  <View style={styles.taskDetails}>
+                    <Text style={styles.taskDetailText}>
+                      <Ionicons name="time-outline" size={14} color={COLORS.textSecondary} />
+                      {' '}{task.time}
+                    </Text>
+                    <Text style={styles.taskDetailText}>
+                      <Ionicons name="shirt-outline" size={14} color={COLORS.textSecondary} />
+                      {' '}{task.items} items
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.taskActions}>
+                  {task.status === 'pending' && (
+                    <TouchableOpacity 
+                      style={styles.startButton}
+                      onPress={() => handleStartTask(task.id)}
+                    >
+                      <Text style={styles.startButtonText}>Start Task</Text>
+                    </TouchableOpacity>
+                  )}
+                  {task.status === 'in_progress' && (
+                    <TouchableOpacity 
+                      style={styles.completeButton}
+                      onPress={() => handleCompleteTask(task.id)}
+                    >
+                      <Text style={styles.completeButtonText}>Complete</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity 
+                    style={styles.detailsButton}
+                    onPress={() => router.push(`/task/${task.id}`)}
+                  >
+                    <Text style={styles.detailsButtonText}>View Details</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -117,139 +272,211 @@ export default function DeliveryHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  headerTitle: {
-    fontSize: 28,
+  greeting: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+  },
+  deliveryName: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.text,
   },
-  tabContainer: {
+  onlineButton: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 10,
-    backgroundColor: COLORS.surface,
   },
-  activeTab: {
-    backgroundColor: COLORS.primary,
+  onlineIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
-  tabText: {
-    fontSize: 16,
+  onlineText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  activeTabText: {
     color: COLORS.white,
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 100,
   },
-  taskCard: {
-    backgroundColor: COLORS.background,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  cardHeader: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  actionsContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
     alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  actionText: {
+    fontSize: 12,
+    color: COLORS.text,
+    fontWeight: '500',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  tasksContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  taskCard: {
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    paddingBottom: 12,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  typeIndicator: {
-    width: 4,
-    height: 20,
-    borderRadius: 2,
-    marginRight: 8,
+  taskTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  orderId: {
+  taskType: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  taskInfo: {
+    marginBottom: 12,
+  },
+  customerName: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.text,
-    marginLeft: 8,
-    flex: 1,
-  },
-  timeSlot: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  customerInfo: {
-    marginBottom: 16,
-  },
-  customerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    marginBottom: 4,
   },
   address: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginBottom: 8,
   },
-  actionButtons: {
+  taskDetails: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    gap: 16,
+  },
+  taskDetailText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  taskActions: {
+    flexDirection: 'row',
     gap: 12,
   },
-  primaryButton: {
+  startButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
-  primaryButtonText: {
+  startButtonText: {
     color: COLORS.white,
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
   },
-  secondaryButton: {
+  completeButton: {
+    backgroundColor: COLORS.success,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  completeButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  detailsButton: {
     backgroundColor: COLORS.surface,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
-  secondaryButtonText: {
+  detailsButtonText: {
     color: COLORS.text,
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 80,
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginTop: 24,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    marginTop: 8,
   },
 });

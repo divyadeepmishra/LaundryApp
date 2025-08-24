@@ -92,7 +92,7 @@
 
 
 // app/_layout.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -100,8 +100,10 @@ import * as SecureStore from 'expo-secure-store';
 import { useFonts } from 'expo-font';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+// Your Clerk Publishable Key - Replace with your actual key
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_your_key_here';
 
+// Cache the Clerk JWT
 const tokenCache = {
   async getToken(key: string) {
     try {
@@ -132,15 +134,15 @@ export default function RootLayout() {
     if (error) throw error;
   }, [error]);
 
-  // We will hide the splash screen manually inside InitialLayout
-  // after Clerk is loaded.
-  
   if (!loaded) {
     return null;
   }
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
+    <ClerkProvider 
+      publishableKey={CLERK_PUBLISHABLE_KEY} 
+      tokenCache={tokenCache}
+    >
       <InitialLayout />
     </ClerkProvider>
   );
@@ -151,9 +153,9 @@ function InitialLayout() {
   const { user } = useUser();
   const segments = useSegments();
   const router = useRouter();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    // This is the key change: we wait until Clerk is loaded before doing anything.
     if (!isLoaded) {
       return;
     }
@@ -162,23 +164,50 @@ function InitialLayout() {
     SplashScreen.hideAsync();
 
     const inAuthGroup = segments[0] === '(auth)';
+    
+    // Get user role from Clerk metadata, default to customer
     const role = user?.publicMetadata?.role || 'customer';
 
-    if (isSignedIn && !inAuthGroup) {
-      // User is signed in and not in the auth flow.
-      // Redirect them to their respective role's home screen.
+    console.log('🔐 Auth Debug:', { 
+      isSignedIn, 
+      inAuthGroup, 
+      role, 
+      segments, 
+      userId: user?.id,
+      userEmail: user?.emailAddresses?.[0]?.emailAddress,
+      publicMetadata: user?.publicMetadata,
+      hasRedirected
+    });
+
+    // Check if user exists (which means they're signed in) even if isSignedIn is false
+    const userExists = user?.id && user?.emailAddresses?.length > 0;
+    const shouldBeSignedIn = userExists || isSignedIn;
+
+    if (shouldBeSignedIn && !hasRedirected) {
+      // User is signed in - redirect based on role
+      console.log('✅ User signed in, redirecting to:', role);
+      setHasRedirected(true);
+      
       if (role === 'admin') {
         router.replace('/(admin)');
       } else if (role === 'delivery') {
         router.replace('/(delivery)');
       } else {
+        // Default to customer for all users without a specific role
         router.replace('/(customer)');
       }
-    } else if (!isSignedIn) {
-      // User is not signed in, redirect to the login screen.
-      router.replace('/(auth)/Signin'); // Ensure filename matches, e.g., Signin.tsx
+    } else if (!shouldBeSignedIn && !inAuthGroup && !hasRedirected) {
+      // User is not signed in and not in auth flow, redirect to login
+      console.log('❌ User not signed in, redirecting to signin');
+      setHasRedirected(true);
+      router.replace('/(auth)/Signin');
     }
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, segments, hasRedirected]);
+
+  // Reset redirect flag when user changes
+  useEffect(() => {
+    setHasRedirected(false);
+  }, [user?.id]);
 
   // While Clerk is loading, we render nothing, so the splash screen remains visible.
   if (!isLoaded) {

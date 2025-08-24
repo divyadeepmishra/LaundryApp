@@ -3,102 +3,151 @@ import React from 'react';
 import {
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUser, useAuth } from '@clerk/clerk-expo';
 
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
+import AuthDebugger from '../../components/AuthDebugger';
 
 export default function CustomerHomeScreen() {
-  const user = { name: 'Maharaj' }; // Replace with actual user data from Clerk
+  const { user } = useUser();
+  const { signOut } = useAuth();
+  const userName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User';
 
-  // This would come from your API, showing the user's most recent active booking
-  const activeBooking = {
-    id: 1,
-    status: 'in_progress',
-    statusText: 'Your clothes are being washed!',
-    estimatedCompletion: 'Today, 6:00 PM',
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace('/(auth)/Signin');
+            } catch (error) {
+              console.error('Sign out error:', error);
+            }
+          },
+        },
+      ]
+    );
   };
 
+  // Mock data - replace with actual API calls
   const services = [
-    { id: 'wash-fold', name: 'Wash & Fold', description: 'Fresh, folded, and ready to wear.', icon: 'shirt' },
-    { id: 'dry-clean', name: 'Dry Cleaning', description: 'Expert care for delicate items.', icon: 'diamond' },
+    { id: '1', name: 'Wash & Fold', price: 50, icon: 'shirt-outline', description: 'Professional washing and folding' },
+    { id: '2', name: 'Dry Cleaning', price: 100, icon: 'shirt-outline', description: 'Expert dry cleaning service' },
+    { id: '3', name: 'Iron & Press', price: 30, icon: 'shirt-outline', description: 'Crisp ironing and pressing' },
+    { id: '4', name: 'Starch Service', price: 20, icon: 'shirt-outline', description: 'Add starch for extra crispness' },
+    { id: '5', name: 'Express Service', price: 80, icon: 'flash-outline', description: 'Same day delivery' },
+    { id: '6', name: 'Bulk Order', price: 200, icon: 'cube-outline', description: 'Large quantity discounts' },
   ];
+
+  const quickStats = {
+    completedOrders: 12,
+    inProgressOrders: 3,
+    rating: 4.8,
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hello, {userName}! 👋</Text>
+          <Text style={styles.subtitle}>What would you like to do today?</Text>
+        </View>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Ionicons name="notifications-outline" size={24} color={COLORS.text} />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView 
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Welcome back,</Text>
-            <Text style={styles.userName}>{user.name}</Text>
+        {/* Quick Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle-outline" size={24} color={COLORS.success} />
+            <Text style={styles.statValue}>{quickStats.completedOrders}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="notifications-outline" size={26} color={COLORS.text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Active Booking Status Card */}
-        {activeBooking && (
-          <TouchableOpacity style={styles.statusCard}>
-            <View style={styles.statusIconContainer}>
-              <Ionicons name="hourglass-outline" size={24} color={COLORS.primary} />
-            </View>
-            <View style={styles.statusInfo}>
-              <Text style={styles.statusText}>{activeBooking.statusText}</Text>
-              <Text style={styles.statusSubText}>Est. completion: {activeBooking.estimatedCompletion}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={22} color={COLORS.textSecondary} />
-          </TouchableOpacity>
-        )}
-
-        {/* Hero Action Card */}
-        <View style={styles.heroCard}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1620632694205-5b6bab29813c?w=800' }}
-            style={styles.heroImage}
-          />
-          <View style={styles.heroOverlay}>
-            <Text style={styles.heroTitle}>Need fresh clothes?</Text>
-            <Text style={styles.heroSubtitle}>Let's get your laundry done.</Text>
-            <TouchableOpacity style={styles.heroButton} onPress={() => router.push('/bookings')}>
-              <Text style={styles.heroButtonText}>Create New Booking</Text>
-              <Ionicons name="arrow-forward" size={20} color={COLORS.white} />
-            </TouchableOpacity>
+          <View style={styles.statCard}>
+            <Ionicons name="time-outline" size={24} color={COLORS.warning} />
+            <Text style={styles.statValue}>{quickStats.inProgressOrders}</Text>
+            <Text style={styles.statLabel}>In Progress</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="star-outline" size={24} color={COLORS.primary} />
+            <Text style={styles.statValue}>{quickStats.rating}</Text>
+            <Text style={styles.statLabel}>Rating</Text>
           </View>
         </View>
 
-        {/* Our Services Section */}
+        {/* Services */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Our Services</Text>
-          {services.map((service) => (
-            <TouchableOpacity 
-              key={service.id} 
-              style={styles.serviceCard}
-              onPress={() => router.push(`/service/${service.id}`)}
-            >
-              <View style={styles.serviceIconContainer}>
-                <Ionicons name={service.icon as any} size={28} color={COLORS.primary} />
-              </View>
-              <View style={styles.serviceInfo}>
+          <View style={styles.servicesGrid}>
+            {services.map((service) => (
+              <TouchableOpacity
+                key={service.id}
+                style={styles.serviceCard}
+                onPress={() => router.push(`/service/${service.id}`)}
+              >
+                <View style={styles.serviceIcon}>
+                  <Ionicons name={service.icon as any} size={32} color={COLORS.primary} />
+                </View>
                 <Text style={styles.serviceName}>{service.name}</Text>
+                <Text style={styles.servicePrice}>₹{service.price}</Text>
                 <Text style={styles.serviceDescription}>{service.description}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={22} color={COLORS.textSecondary} />
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActions}>
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => router.push('/bookings')}
+            >
+              <Ionicons name="calendar-outline" size={32} color={COLORS.primary} />
+              <Text style={styles.actionText}>View Bookings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={() => router.push('/profile')}
+            >
+              <Ionicons name="person-outline" size={32} color={COLORS.primary} />
+              <Text style={styles.actionText}>Profile</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Debug Section - Remove in production */}
+        <AuthDebugger />
       </ScrollView>
     </SafeAreaView>
   );
@@ -109,145 +158,149 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   greeting: {
-    fontSize: 18,
-    color: COLORS.textSecondary,
-  },
-  userName: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.text,
   },
-  statusCard: {
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+  },
+  headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 16,
+    gap: 12,
+  },
+  notificationButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.error,
+  },
+  signOutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.error + '10',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  statsContainer: {
+    flexDirection: 'row',
     marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  statusIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 56, 92, 0.1)',
-    marginRight: 16,
-  },
-  statusInfo: {
-    flex: 1,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  statusSubText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  heroCard: {
-    height: 220,
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 32,
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-  },
-  heroOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: 24,
-    justifyContent: 'flex-end',
-  },
-  heroTitle: {
-    fontSize: 28,
+  statValue: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.white,
-    marginBottom: 4,
+    color: COLORS.text,
+    marginTop: 8,
   },
-  heroSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
-    marginBottom: 16,
-  },
-  heroButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
-  heroButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 4,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: 16,
   },
-  serviceCard: {
+  servicesGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  serviceCard: {
+    width: '48%',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    marginBottom: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  serviceIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+  serviceIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    marginRight: 16,
-  },
-  serviceInfo: {
-    flex: 1,
+    marginBottom: 12,
   },
   serviceName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: COLORS.text,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  servicePrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 4,
   },
   serviceDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  actionCard: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  actionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: 8,
   },
 });

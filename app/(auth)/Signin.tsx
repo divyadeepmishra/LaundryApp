@@ -8,6 +8,7 @@ import * as WebBrowser from 'expo-web-browser';
 import Svg, { Path } from 'react-native-svg'; // Import for SVG icons
 import { Text, View } from '../../components/Themed';
 import { COLORS } from '../../constants/Colors';
+import { useOAuthFlow } from '../../components/useOAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -18,6 +19,10 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // OAuth hooks
+  const { onSelectAuth: onGooglePress } = useOAuthFlow('oauth_google');
+  const { onSelectAuth: onApplePress } = useOAuthFlow('oauth_apple');
+
   const onSignInPress = async () => {
     if (!isLoaded) return;
     setLoading(true);
@@ -25,7 +30,7 @@ export default function SignInScreen() {
       const signInAttempt = await signIn.create({ identifier: emailAddress, password });
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace('/');
+        // Router will handle redirection based on user role
       } else {
         Alert.alert('Sign In Failed', 'Please check your credentials.');
       }
@@ -64,14 +69,14 @@ export default function SignInScreen() {
         <View style={styles.formContainer}>
           {/* Social Logins */}
           <View style={styles.socialContainer}>
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity style={styles.socialButton} onPress={onGooglePress}>
               <View style={styles.socialButtonContent}>
                 <GoogleIcon />
                 <Text style={styles.socialButtonText}>Continue with Google</Text>
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.socialButton}>
+            <TouchableOpacity style={styles.socialButton} onPress={onApplePress}>
               <View style={styles.socialButtonContent}>
                 <AppleIcon />
                 <Text style={styles.socialButtonText}>Continue with Apple</Text>

@@ -2,55 +2,66 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
 import { COLORS } from '../../constants/Colors';
 
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof Ionicons>['name'];
-  color: string;
-}) {
-  return <Ionicons size={26} style={{ marginBottom: -3 }} {...props} />;
-}
-
-export default function CustomerTabLayout() {
+export default function CustomerLayout() {
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarStyle: {
-          backgroundColor: COLORS.background,
+          backgroundColor: COLORS.white,
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
-          height: 90, // A slightly taller, more modern tab bar
-          paddingTop: 10,
-          paddingBottom: 30,
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 88,
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
+        headerStyle: {
+          backgroundColor: COLORS.white,
+        },
+        headerTitleStyle: {
+          color: COLORS.text,
           fontWeight: '600',
         },
-        headerShown: false,
-      }}>
+        headerShadowVisible: false,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <TabBarIcon name="home-sharp" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
-          title: 'My Bookings',
-          tabBarIcon: ({ color }) => <TabBarIcon name="calendar-sharp" color={color} />,
+          title: 'Bookings',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="role-assignment"
+        options={{
+          title: 'Role Test',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <TabBarIcon name="person-sharp" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
