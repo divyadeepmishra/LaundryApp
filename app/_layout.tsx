@@ -139,7 +139,10 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
+    <ClerkProvider 
+      publishableKey={CLERK_PUBLISHABLE_KEY} 
+      tokenCache={tokenCache}
+    >
       <InitialLayout />
     </ClerkProvider>
   );
@@ -163,6 +166,8 @@ function InitialLayout() {
     
     // Get user role from Clerk metadata, default to customer
     const role = user?.publicMetadata?.role || 'customer';
+
+    console.log('Auth state:', { isSignedIn, inAuthGroup, role, segments });
 
     if (isSignedIn && !inAuthGroup) {
       // User is signed in and not in the auth flow
