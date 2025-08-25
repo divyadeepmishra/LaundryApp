@@ -27,6 +27,7 @@ export default function AdminLayout() {
         name="index" 
         options={{ 
           title: 'Admin Dashboard',
+          headerShown: false,
           headerRight: () => (
             <TouchableOpacity onPress={() => signOut()}>
               <Ionicons name="log-out-outline" size={24} color={COLORS.error} style={{ marginRight: 16 }} />

@@ -32,6 +32,7 @@ export default function DeliveryLayout() {
         name="index"
         options={{
           title: 'Dashboard',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -41,6 +42,7 @@ export default function DeliveryLayout() {
         name="tasks"
         options={{
           title: 'Tasks',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list-outline" size={size} color={color} />
           ),
@@ -50,6 +52,7 @@ export default function DeliveryLayout() {
         name="role-assignment"
         options={{
           title: 'Role Test',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),

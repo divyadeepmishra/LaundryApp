@@ -95,7 +95,7 @@ export default function AdminDashboardScreen() {
       title: 'Customers',
       subtitle: 'View customer information',
       icon: 'people-outline',
-      onPress: () => router.push('/customer'),
+      onPress: () => router.push('/customers'),
     },
     {
       id: 'services',

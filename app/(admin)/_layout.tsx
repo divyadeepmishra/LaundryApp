@@ -31,6 +31,7 @@ export default function AdminLayout() {
         name="index"
         options={{
           title: 'Dashboard',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -40,6 +41,7 @@ export default function AdminLayout() {
         name="orders"
         options={{
           title: 'Orders',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="receipt-outline" size={size} color={color} />
           ),
@@ -49,6 +51,7 @@ export default function AdminLayout() {
         name="customers"
         options={{
           title: 'Customers',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" size={size} color={color} />
           ),
@@ -58,6 +61,7 @@ export default function AdminLayout() {
         name="services"
         options={{
           title: 'Services',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="shirt-outline" size={size} color={color} />
           ),
@@ -67,6 +71,7 @@ export default function AdminLayout() {
         name="analytics"
         options={{
           title: 'Analytics',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="analytics-outline" size={size} color={color} />
           ),
@@ -76,6 +81,7 @@ export default function AdminLayout() {
         name="role-assignment"
         options={{
           title: 'Role Test',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),

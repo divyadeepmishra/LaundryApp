@@ -31,6 +31,7 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          headerShown: false,
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
@@ -41,6 +42,7 @@ export default function CustomerLayout() {
         name="bookings"
         options={{
           title: 'Bookings',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
           ),
@@ -50,6 +52,7 @@ export default function CustomerLayout() {
         name="role-assignment"
         options={{
           title: 'Role Test',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),
@@ -59,6 +62,7 @@ export default function CustomerLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),
